@@ -1,10 +1,54 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* --- 1. BASE VARIABLES --- */
+/* Font Import must be at the top */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
-/* LIGHT THEME (Clean, Apple-like) */
+/* --- 1. THEME CONFIGURATION --- */
+@theme {
+  --font-display: 'Fredoka', sans-serif;
+  --font-sans: 'Outfit', sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+
+  /* Bingo Colors */
+  --color-bingo-b: hsl(var(--bingo-b));
+  --color-bingo-i: hsl(var(--bingo-i));
+  --color-bingo-n: hsl(var(--bingo-n));
+  --color-bingo-g: hsl(var(--bingo-g));
+  --color-bingo-o: hsl(var(--bingo-o));
+}
+
+/* --- 2. CSS VARIABLES --- */
 :root {
   --background: 210 40% 98%;
   --foreground: 222.2 84% 4.9%;
@@ -15,7 +59,7 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
 
-  --primary: 262 83% 58%; /* Vibrant Purple */
+  --primary: 262 83% 58%;
   --primary-foreground: 210 40% 98%;
 
   --secondary: 210 40% 96.1%;
@@ -36,47 +80,47 @@
 
   --radius: 0.75rem;
 
-  /* Custom Fonts */
-  --font-display: 'Fredoka', sans-serif;
-  --font-sans: 'Outfit', sans-serif;
+  --bingo-b: 0 85% 60%;
+  --bingo-i: 35 90% 60%;
+  --bingo-n: 140 70% 45%;
+  --bingo-g: 200 90% 50%;
+  --bingo-o: 270 80% 60%;
 }
 
-/* DEVELOPER THEME (Cyberpunk/Hacker) */
 .developer-theme {
   --background: 260 50% 5%;
   --foreground: 280 100% 90%;
-
   --card: 260 50% 8%;
   --card-foreground: 280 100% 90%;
-
   --popover: 260 50% 8%;
   --popover-foreground: 280 100% 90%;
-
-  --primary: 290 100% 60%; /* Neon Pink/Purple */
+  --primary: 290 100% 60%;
   --primary-foreground: 260 50% 5%;
-
   --secondary: 260 30% 15%;
   --secondary-foreground: 280 100% 90%;
-
   --muted: 260 30% 15%;
   --muted-foreground: 260 20% 65%;
-
-  --accent: 180 100% 50%; /* Cyan */
+  --accent: 180 100% 50%;
   --accent-foreground: 260 50% 5%;
-
   --destructive: 0 100% 60%;
   --destructive-foreground: 0 0% 100%;
-
   --border: 260 40% 20%;
   --input: 260 40% 15%;
   --ring: 290 100% 60%;
+
+  --bingo-b: 0 100% 65%;
+  --bingo-i: 40 100% 65%;
+  --bingo-n: 130 100% 60%;
+  --bingo-g: 180 100% 50%;
+  --bingo-o: 290 100% 65%;
 }
 
-/* --- 2. GLOBAL STYLES --- */
-
+/* --- 3. BASE STYLES --- */
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
+    border-style: solid;
+    border-width: 0;
   }
   
   html {
@@ -84,58 +128,69 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground selection:bg-primary/30;
-    /* Fluid Typography for responsiveness */
-    font-size: clamp(14px, 2vw, 16px); 
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    font-size: clamp(14px, 2vw, 16px);
+    -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display font-medium tracking-tight;
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.025em;
   }
-
-  /* Hide Scrollbars but keep functionality */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  
+  button, input, select, textarea {
+    border-width: 1px;
   }
 }
 
-/* --- 3. COMPONENT UTILITIES --- */
-
+/* --- 4. CUSTOM UTILITIES --- */
 @layer utilities {
-  /* Glassmorphism Panel */
   .glass-panel {
-    @apply bg-background/80 backdrop-blur-xl border border-white/20 shadow-xl;
-  }
-  
-  .developer-theme .glass-panel {
-    @apply bg-black/60 border-purple-500/30 shadow-purple-900/20;
+    background-color: hsl(var(--background) / 0.8);
+    backdrop-filter: blur(24px);
+    border: 1px solid hsl(0 0% 100% / 0.2);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
-  /* Responsive Game Grid */
+  .developer-theme .glass-panel {
+    background-color: rgb(0 0 0 / 0.6);
+    border-color: hsl(270 100% 60% / 0.3);
+    box-shadow: 0 20px 25px -5px rgb(147 51 234 / 0.2);
+  }
+
   .bingo-grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0.5rem;
   }
-  
+
   @media (min-width: 640px) {
     .bingo-grid {
       gap: 0.75rem;
     }
   }
 
-  /* Hover Animations */
   .hover-lift {
-    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-sm;
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-0.125rem);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+
+  .hover-lift:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   }
 }
 
-/* --- 4. DEVELOPER THEME EFFECTS --- */
-
+/* --- 5. THEME EFFECTS --- */
 .developer-theme {
   background-image: 
     linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
