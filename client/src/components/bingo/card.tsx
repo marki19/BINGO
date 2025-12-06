@@ -87,7 +87,7 @@ export const BingoCard = ({ card, className }: BingoCardProps) => {
         ))}
       </div>
 
-      <div className="grid grid-cols-5 gap-1 sm:gap-2">
+      <div className="bingo-grid">
         {[0, 1, 2, 3, 4].map(row => (
           <React.Fragment key={row}>
             {[0, 1, 2, 3, 4].map(col => renderCell(col, row))}

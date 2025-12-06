@@ -1,6 +1,6 @@
 import { db } from "./db.js";
-import { games, players, cards, winners, messages, insertGameSchema, insertPlayerSchema, insertCardSchema, insertWinnerSchema, insertMessageSchema } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { games, players, cards, winners, messages } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import type { Game, InsertGame, Player, InsertPlayer, Card, InsertCard, Winner, InsertWinner, Message, InsertMessage } from "@shared/schema";
 
 export interface IStorage {
@@ -119,4 +119,148 @@ export class PostgresStorage implements IStorage {
   }
 }
 
-export const storage = new PostgresStorage();
+export class MemStorage implements IStorage {
+  private games: Map<string, Game> = new Map();
+  private players: Map<string, Player> = new Map();
+  private cards: Map<string, Card> = new Map();
+  private winners: Map<number, Winner> = new Map();
+  private messages: Map<string, Message> = new Map();
+  private winnerIdCounter = 1;
+
+  // Games
+  async createGame(insertGame: InsertGame): Promise<Game> {
+    const game: Game = {
+      ...insertGame,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      calledNumbers: insertGame.calledNumbers as unknown as number[] || [],
+      stagedNumber: insertGame.stagedNumber || null,
+      status: insertGame.status || "waiting",
+      winPattern: insertGame.winPattern || "line"
+    };
+    this.games.set(game.id, game);
+    return game;
+  }
+
+  async getGame(gameId: string): Promise<Game | undefined> {
+    return this.games.get(gameId);
+  }
+
+  async updateGameStatus(gameId: string, status: string): Promise<void> {
+    const game = this.games.get(gameId);
+    if (game) {
+      game.status = status;
+      game.updatedAt = new Date();
+      this.games.set(gameId, game);
+    }
+  }
+
+  async updateCalledNumbers(gameId: string, numbers: number[]): Promise<void> {
+    const game = this.games.get(gameId);
+    if (game) {
+      game.calledNumbers = numbers;
+      game.updatedAt = new Date();
+      this.games.set(gameId, game);
+    }
+  }
+
+  async updateStagedNumber(gameId: string, number: number | null): Promise<void> {
+    const game = this.games.get(gameId);
+    if (game) {
+      game.stagedNumber = number;
+      game.updatedAt = new Date();
+      this.games.set(gameId, game);
+    }
+  }
+
+  // Players
+  async createPlayer(insertPlayer: InsertPlayer): Promise<Player> {
+    const player: Player = {
+      ...insertPlayer,
+      joinedAt: new Date(),
+      cardCount: insertPlayer.cardCount || 1
+    };
+    this.players.set(player.id, player);
+    return player;
+  }
+
+  async getPlayer(playerId: string): Promise<Player | undefined> {
+    return this.players.get(playerId);
+  }
+
+  async getGamePlayers(gameId: string): Promise<Player[]> {
+    return Array.from(this.players.values()).filter(p => p.gameId === gameId);
+  }
+
+  async updatePlayerCardCount(playerId: string, count: number): Promise<void> {
+    const player = this.players.get(playerId);
+    if (player) {
+      player.cardCount = count;
+      this.players.set(playerId, player);
+    }
+  }
+
+  async deletePlayer(playerId: string): Promise<void> {
+    this.players.delete(playerId);
+  }
+
+  // Cards
+  async createCard(insertCard: InsertCard): Promise<Card> {
+    const card: Card = {
+      ...insertCard,
+      marked: insertCard.marked as unknown as number[] || []
+    };
+    this.cards.set(card.id, card);
+    return card;
+  }
+
+  async getPlayerCards(playerId: string): Promise<Card[]> {
+    return Array.from(this.cards.values()).filter(c => c.playerId === playerId);
+  }
+
+  async updateCardMarked(cardId: string, marked: number[]): Promise<void> {
+    const card = this.cards.get(cardId);
+    if (card) {
+      card.marked = marked;
+      this.cards.set(cardId, card);
+    }
+  }
+
+  async deleteCard(cardId: string): Promise<void> {
+    this.cards.delete(cardId);
+  }
+
+  // Winners
+  async createWinner(insertWinner: InsertWinner): Promise<Winner> {
+    const winner: Winner = {
+      ...insertWinner,
+      id: this.winnerIdCounter++,
+      wonAt: new Date()
+    };
+    this.winners.set(winner.id, winner);
+    return winner;
+  }
+
+  async getGameWinners(gameId: string): Promise<Winner[]> {
+    return Array.from(this.winners.values()).filter(w => w.gameId === gameId);
+  }
+
+  // Messages
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const message: Message = {
+      ...insertMessage,
+      createdAt: new Date(),
+      isSystem: insertMessage.isSystem || false
+    };
+    this.messages.set(message.id, message);
+    return message;
+  }
+
+  async getGameMessages(gameId: string): Promise<Message[]> {
+    return Array.from(this.messages.values())
+      .filter(m => m.gameId === gameId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+}
+
+export const storage = process.env.USE_MEM_STORAGE === 'true' ? new MemStorage() : new PostgresStorage();
