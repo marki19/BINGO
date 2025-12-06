@@ -912,7 +912,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       removeCard,
       exitGame
     }}>
-      {children}
+      <div className={isDeveloper ? "developer-theme" : ""}>
+        {children}
+      </div>
     </GameContext.Provider>
   );
 };

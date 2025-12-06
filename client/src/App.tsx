@@ -32,8 +32,8 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen w-full flex items-center justify-center p-4 bg-background">
-          <div className="bg-card p-8 rounded-xl border shadow-sm text-center space-y-6 max-w-sm w-full animate-in zoom-in duration-300">
+        <div className="min-h-screen w-full flex items-center justify-center p-4 bg-background/50">
+          <div className="glass-panel p-8 rounded-xl text-center space-y-6 max-w-sm w-full animate-in zoom-in duration-300">
             <div className="text-6xl animate-bounce">🔄</div>
             <div className="space-y-2">
               <h2 className="text-2xl font-display font-bold tracking-tight">Reconnecting...</h2>
