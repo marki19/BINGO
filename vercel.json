@@ -1,8 +1,5 @@
 {
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
   "buildCommand": "vite build",
-  "outputDirectory": "dist/public",
-  "env": {
-    "VITE_API_URL": "@vite_api_url"
-  }
+  "outputDirectory": "dist/public"
 }
