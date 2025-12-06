@@ -1,6 +1,6 @@
 import { type Server } from "node:http";
-
 import express, { type Express, type Request, Response, NextFunction } from "express";
+import cors from "cors"; // <--- ADDED THIS
 import { registerRoutes } from "./routes";
 
 export function log(message: string, source = "express") {
@@ -15,6 +15,15 @@ export function log(message: string, source = "express") {
 }
 
 export const app = express();
+
+// --- ADDED THIS BLOCK ---
+// This handles the "Allow-Origin" header automatically
+app.use(cors({
+  // Use the environment variable, or default to localhost for development
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true, // Allow cookies/sessions
+}));
+// ------------------------
 
 declare module 'http' {
   interface IncomingMessage {
@@ -71,8 +80,6 @@ export default async function runApp(
     throw err;
   });
 
-  // importantly run the final setup after setting up all the other routes so
-  // the catch-all route doesn't interfere with the other routes
   await setup(app, server);
 
   // SPA Fallback: Only in production (dev mode uses Vite's middleware)
@@ -86,10 +93,6 @@ export default async function runApp(
     });
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
     port,
