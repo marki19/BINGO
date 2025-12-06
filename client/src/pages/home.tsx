@@ -56,20 +56,20 @@ export default function Home() {
   }, [hostName, playerLimit, createGame, setLocation]);
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 bg-background/50">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 bg-background text-foreground">
       
-      {/* Main Card with Glass Effect */}
-      <Card className="glass-panel w-full max-w-md border-0 ring-1 ring-white/10 shadow-2xl animate-in zoom-in-95 duration-500">
+      {/* Main Card */}
+      <Card className="w-full max-w-md border shadow-sm animate-in zoom-in-95 duration-500 bg-card">
         
         <CardHeader className="text-center space-y-2 pb-6 sm:pb-8">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-tr from-primary to-secondary rounded-2xl flex items-center justify-center shadow-lg hover-lift mb-4 ring-4 ring-background/50">
-            <Sparkles className="w-8 h-8 text-white animate-pulse" />
+          <div className="mx-auto w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-4">
+            <Sparkles className="w-7 h-7" />
           </div>
           <div>
-            <CardTitle className="text-4xl sm:text-5xl font-display font-bold tracking-tight bg-gradient-to-br from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
+            <CardTitle className="text-3xl sm:text-4xl font-display font-bold tracking-tight text-foreground">
               BINGO MAX
             </CardTitle>
-            <CardDescription className="text-lg font-medium mt-2">
+            <CardDescription className="text-base font-medium mt-2 text-muted-foreground">
               Next Gen Multiplayer Bingo
             </CardDescription>
           </div>
@@ -77,11 +77,11 @@ export default function Home() {
 
         <CardContent>
           <Tabs defaultValue="join" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8 p-1 bg-muted/50 rounded-xl h-auto">
-              <TabsTrigger value="join" className="rounded-lg font-bold py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+            <TabsList className="grid w-full grid-cols-2 mb-8 p-1 bg-muted rounded-lg h-auto">
+              <TabsTrigger value="join" className="rounded-md font-semibold py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
                 <Gamepad2 className="w-4 h-4 mr-2" /> Join Game
               </TabsTrigger>
-              <TabsTrigger value="create" className="rounded-lg font-bold py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+              <TabsTrigger value="create" className="rounded-md font-semibold py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
                 <Users className="w-4 h-4 mr-2" /> Host Game
               </TabsTrigger>
             </TabsList>
@@ -90,25 +90,25 @@ export default function Home() {
             <TabsContent value="join" className="space-y-4 animate-in slide-in-from-left-2 fade-in duration-300 outline-none">
               <form onSubmit={handleJoin} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="player-name" className="text-sm font-semibold text-muted-foreground ml-1">Player Name</label>
+                  <label htmlFor="player-name" className="text-sm font-semibold text-muted-foreground">Player Name</label>
                   <Input
                     id="player-name"
                     placeholder="e.g. Lucky Player"
                     value={playerName}
                     onChange={e => setPlayerName(e.target.value)}
-                    className="h-12 bg-background/50 border-input/50 focus:ring-primary/50 text-lg transition-all hover:bg-background/80"
+                    className="h-11 bg-background border-input focus:ring-primary text-base transition-all"
                     required
                     data-testid="input-player-name"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="game-id" className="text-sm font-semibold text-muted-foreground ml-1">Game ID</label>
+                  <label htmlFor="game-id" className="text-sm font-semibold text-muted-foreground">Game ID</label>
                   <Input
                     id="game-id"
                     placeholder="e.g. DEMO123"
                     value={gameId}
                     onChange={e => setGameId(e.target.value.toUpperCase())}
-                    className="h-12 bg-background/50 border-input/50 font-mono tracking-widest uppercase text-lg transition-all hover:bg-background/80"
+                    className="h-11 bg-background border-input font-mono tracking-wider uppercase text-base transition-all"
                     required
                     data-testid="input-game-id"
                   />
@@ -116,7 +116,7 @@ export default function Home() {
                 <Button 
                   type="submit" 
                   disabled={isJoining}
-                  className="w-full h-12 text-lg font-bold hover-lift shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 transition-all mt-2" 
+                  className="w-full h-11 text-base font-semibold hover-lift shadow-sm bg-primary hover:bg-primary/90 transition-all mt-2"
                   data-testid="button-join-room"
                 >
                   {isJoining ? (
@@ -130,23 +130,23 @@ export default function Home() {
             <TabsContent value="create" className="space-y-4 animate-in slide-in-from-right-2 fade-in duration-300 outline-none">
               <form onSubmit={handleCreate} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="host-name" className="text-sm font-semibold text-muted-foreground ml-1">Host Name</label>
+                  <label htmlFor="host-name" className="text-sm font-semibold text-muted-foreground">Host Name</label>
                   <Input
                     id="host-name"
                     placeholder="e.g. Bingo Master"
                     value={hostName}
                     onChange={e => setHostName(e.target.value)}
-                    className="h-12 bg-background/50 border-input/50 text-lg transition-all hover:bg-background/80"
+                    className="h-11 bg-background border-input text-base transition-all"
                     required
                     data-testid="input-host-name"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="player-limit" className="text-sm font-semibold text-muted-foreground ml-1">Max Players</label>
+                  <label htmlFor="player-limit" className="text-sm font-semibold text-muted-foreground">Max Players</label>
                   <div className="relative">
                     <select
                       id="player-limit"
-                      className="flex h-12 w-full items-center justify-between rounded-md border border-input/50 bg-background/50 px-3 py-2 text-lg ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-background/80 transition-all appearance-none"
+                      className="flex h-11 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all appearance-none"
                       value={playerLimit}
                       onChange={e => setPlayerLimit(e.target.value)}
                       data-testid="select-player-limit"
@@ -158,7 +158,7 @@ export default function Home() {
                       <option value="100">100 Players (Huge)</option>
                       <option value="500">500 Players (Massive)</option>
                     </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 text-xs">
                       ▼
                     </div>
                   </div>
@@ -166,7 +166,7 @@ export default function Home() {
                 <Button 
                   type="submit" 
                   disabled={isCreating}
-                  className="w-full h-12 text-lg font-bold hover-lift shadow-lg shadow-secondary/20 bg-secondary hover:bg-secondary/90 text-secondary-foreground transition-all mt-2" 
+                  className="w-full h-11 text-base font-semibold hover-lift shadow-sm bg-secondary hover:bg-secondary/80 text-secondary-foreground transition-all mt-2"
                   data-testid="button-create-room"
                 >
                   {isCreating ? "Creating Room..." : "Create New Room"}
@@ -178,7 +178,7 @@ export default function Home() {
       </Card>
 
       {/* Footer */}
-      <div className="mt-8 text-center text-xs font-medium text-muted-foreground/40 animate-in fade-in duration-1000 delay-500">
+      <div className="mt-8 text-center text-xs font-medium text-muted-foreground/60 animate-in fade-in duration-1000 delay-500">
         <p>v1.0.0 • Render • Neon DB • Vercel</p>
       </div>
     </div>
