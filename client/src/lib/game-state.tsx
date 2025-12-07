@@ -865,8 +865,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.removeItem("neon-bingo-player-id");
       sessionStorage.removeItem("neon-bingo-player-name");
 
-      setRole("spectator");
-      setCurrentUser({ name: "Guest", id: "guest" });
+      setRole("player");
+      setCurrentUser({ name: "playerName", id: "playerId" });
       setMyCards([]);
       setThemeState("default");
       setIsDeveloper(false);
