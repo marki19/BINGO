@@ -20,7 +20,7 @@ export const app = express();
 // This handles the "Allow-Origin" header automatically
 app.use(cors({
   // Use the environment variable, or default to localhost for development
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: process.env.CLIENT_URL || "http://localhost:5000",
   credentials: true, // Allow cookies/sessions
 }));
 // ------------------------

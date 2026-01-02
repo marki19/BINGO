@@ -1,50 +1,45 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, serial, json, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, json, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Games table - stores active bingo games
 export const games = pgTable("games", {
-  id: varchar("id").primaryKey(), // Game code like "ABC123"
+  id: varchar("id").primaryKey(),
   hostId: varchar("host_id").notNull(),
   hostName: text("host_name").notNull(),
-  status: varchar("status").notNull().default("waiting"), // waiting, playing, paused, finished
+  status: varchar("status").notNull().default("waiting"),
   playerLimit: integer("player_limit").notNull(),
   winPattern: varchar("win_pattern").notNull().default("line"),
-  calledNumbers: json("called_numbers").default([]), // Array of called numbers
-  stagedNumber: integer("staged_number"), // Currently staged number
+  calledNumbers: json("called_numbers").$type<number[]>().default([]).notNull(),
+  stagedNumber: integer("staged_number"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Players table - players in each game
 export const players = pgTable("players", {
-  id: varchar("id").primaryKey(), // UUID
+  id: varchar("id").primaryKey(),
   gameId: varchar("game_id").notNull().references(() => games.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  cardCount: integer("card_count").default(1),
+  cardCount: integer("card_count").default(1).notNull(),
   joinedAt: timestamp("joined_at").defaultNow().notNull(),
 });
 
-// Cards table - individual bingo cards
 export const cards = pgTable("cards", {
-  id: varchar("id").primaryKey(), // UUID
+  id: varchar("id").primaryKey(),
   playerId: varchar("player_id").notNull().references(() => players.id, { onDelete: "cascade" }),
   gameId: varchar("game_id").notNull().references(() => games.id, { onDelete: "cascade" }),
-  numbers: json("numbers").notNull(), // Array of 25 numbers
-  marked: json("marked").default([]), // Array of marked indices
+  numbers: json("numbers").$type<number[]>().notNull(),
+  marked: json("marked").$type<number[]>().default([]).notNull(),
 });
 
-// Winners table - track winners in each game
 export const winners = pgTable("winners", {
-  id: serial("id").primaryKey(),
+  id: varchar("id").primaryKey(),
   gameId: varchar("game_id").notNull().references(() => games.id, { onDelete: "cascade" }),
   playerId: varchar("player_id").notNull().references(() => players.id, { onDelete: "cascade" }),
-  pattern: varchar("pattern").notNull(),
+  name: text("name").notNull(),
+  pattern: text("pattern").notNull(),
   wonAt: timestamp("won_at").defaultNow().notNull(),
 });
 
-// Messages table - chat messages
 export const messages = pgTable("messages", {
   id: varchar("id").primaryKey(),
   gameId: varchar("game_id").notNull().references(() => games.id, { onDelete: "cascade" }),
@@ -54,14 +49,39 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Insert schemas
-export const insertGameSchema = createInsertSchema(games).omit({ createdAt: true, updatedAt: true });
-export const insertPlayerSchema = createInsertSchema(players).omit({ joinedAt: true });
-export const insertCardSchema = createInsertSchema(cards);
-export const insertWinnerSchema = createInsertSchema(winners).omit({ id: true, wonAt: true });
-export const insertMessageSchema = createInsertSchema(messages).omit({ createdAt: true });
+// Add these to your shared/schema.ts
+export interface IStorage {
+  // Game Methods
+  createGame(game: InsertGame): Promise<Game>;
+  getGame(gameId: string): Promise<Game | undefined>;
+  updateGameStatus(gameId: string, status: string): Promise<void>;
+  updateCalledNumbers(gameId: string, numbers: number[]): Promise<void>;
+  updateStagedNumber(gameId: string, number: number | null): Promise<void>;
 
-// Types
+  // Player Methods
+  createPlayer(player: InsertPlayer): Promise<Player>;
+  getPlayer(playerId: string): Promise<Player | undefined>;
+  getGamePlayers(gameId: string): Promise<Player[]>;
+
+  // Card Methods
+  createCard(card: InsertCard): Promise<Card>;
+  getPlayerCards(playerId: string): Promise<Card[]>;
+  updateCardMarked(cardId: string, marked: number[]): Promise<void>;
+
+  // Winner & Message Methods
+  createWinner(winner: InsertWinner): Promise<Winner>;
+  getGameWinners(gameId: string): Promise<Winner[]>;
+  createMessage(message: InsertMessage): Promise<Message>;
+  getGameMessages(gameId: string): Promise<Message[]>;
+}
+
+// Schemas & Types
+export const insertGameSchema = createInsertSchema(games);
+export const insertPlayerSchema = createInsertSchema(players);
+export const insertCardSchema = createInsertSchema(cards);
+export const insertWinnerSchema = createInsertSchema(winners);
+export const insertMessageSchema = createInsertSchema(messages);
+
 export type Game = typeof games.$inferSelect;
 export type InsertGame = z.infer<typeof insertGameSchema>;
 export type Player = typeof players.$inferSelect;

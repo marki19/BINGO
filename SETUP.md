@@ -10,6 +10,11 @@
 # Install dependencies
 npm install
 
+# Copy environment variables
+cp .env.example .env
+
+# Edit .env with your database URL and other settings
+
 # Setup database (first time only)
 npm run db:push
 ```
