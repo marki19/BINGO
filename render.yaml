@@ -2,13 +2,13 @@ services:
   - type: web
     name: bingo-backend
     runtime: node
-    plan: free # Change to 'starter' if you need more power later
+    plan: free
     buildCommand: npm install && npm run build
     startCommand: node dist/index.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromConfigVar: DATABASE_URL # This expects you to link it in the dashboard
+        sync: false # This tells Render to look for the value you type in the dashboard
       - key: PORT
         value: 10000
