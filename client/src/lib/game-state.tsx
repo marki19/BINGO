@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { useToast } from "@/hooks/use-toast";
 import { getApiUrl } from "./api-utils";
 import { apiRequest } from "./queryClient";
+import { getSocket, joinGameRoom, leaveGameRoom, onEvent, offEvent, emitEvent } from "./socket";
+import { validateMarked, type PatternName } from "@shared/pattern-validator";
 
 export interface BingoCard {
   id: string;
@@ -27,8 +29,12 @@ interface GameContextType {
   joinGame: (gameId: string, name: string, cards: number) => Promise<boolean>;
   createGame: (hostName: string, limit: number) => Promise<string | null>;
   callNumber: () => Promise<void>;
+  startGame: () => Promise<void>;
+  pauseGame: () => Promise<void>;
+  restartGame: () => Promise<void>;
   markNumber: (cardId: string, num: number) => void;
   claimBingo: () => Promise<void>;
+  sendMessage: (text: string) => void;
   exitGame: () => void;
 }
 
@@ -57,7 +63,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshGameState = useCallback(async () => {
-    if (!gameState.gameId || document.visibilityState !== 'visible') return;
+    if (!gameState.gameId) return;
     try {
       const res = await fetch(`${getApiUrl()}/api/games/${gameState.gameId}`);
       const data = await res.json();
@@ -65,10 +71,81 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) { console.error("Sync error", e); }
   }, [gameState.gameId]);
 
+  // Socket.IO event listeners
   useEffect(() => {
-    const timer = setInterval(refreshGameState, gameState.status === 'playing' ? 2000 : 5000);
-    return () => clearInterval(timer);
-  }, [refreshGameState, gameState.status]);
+    if (!gameState.gameId) return;
+
+    const socket = getSocket();
+
+    const handleNumberCalled = (data: { number: number }) => {
+      setGameState(prev => ({
+        ...prev,
+        calledNumbers: [...prev.calledNumbers, data.number]
+      }));
+    };
+
+    const handlePlayerJoined = () => {
+      refreshGameState();
+    };
+
+    const handlePlayerLeft = () => {
+      refreshGameState();
+    };
+
+    const handleGameStarted = () => {
+      setGameState(prev => ({ ...prev, status: "playing" }));
+      toast({ title: "Game Started!", description: "Good luck!" });
+    };
+
+    const handleGamePaused = () => {
+      setGameState(prev => ({ ...prev, status: "paused" }));
+      toast({ title: "Game Paused", description: "Host paused the game" });
+    };
+
+    const handleGameEnded = (data: { winner: string; pattern: string }) => {
+      setGameState(prev => ({ ...prev, status: "finished" }));
+      toast({
+        title: "🎉 BINGO! 🎉",
+        description: `${data.winner} won with ${data.pattern}!`
+      });
+      refreshGameState();
+    };
+
+    const handleGameRestarted = () => {
+      setGameState(prev => ({
+        ...prev,
+        status: "waiting",
+        calledNumbers: [],
+        winners: []
+      }));
+      toast({ title: "New Round", description: "Game has been restarted!" });
+    };
+
+    const handleChatMessage = (data: { playerName: string; text: string; timestamp: number }) => {
+      // Chat messages will be handled by chat component
+      refreshGameState();
+    };
+
+    onEvent("number-called", handleNumberCalled);
+    onEvent("player-joined", handlePlayerJoined);
+    onEvent("player-left", handlePlayerLeft);
+    onEvent("game-started", handleGameStarted);
+    onEvent("game-paused", handleGamePaused);
+    onEvent("game-ended", handleGameEnded);
+    onEvent("game-restarted", handleGameRestarted);
+    onEvent("chat-message", handleChatMessage);
+
+    return () => {
+      offEvent("number-called", handleNumberCalled);
+      offEvent("player-joined", handlePlayerJoined);
+      offEvent("player-left", handlePlayerLeft);
+      offEvent("game-started", handleGameStarted);
+      offEvent("game-paused", handleGamePaused);
+      offEvent("game-ended", handleGameEnded);
+      offEvent("game-restarted", handleGameRestarted);
+      offEvent("chat-message", handleChatMessage);
+    };
+  }, [gameState.gameId, toast, refreshGameState]);
 
   const joinGame = async (gameId: string, name: string, cardCount: number) => {
     try {
@@ -78,9 +155,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setGameState(data.game);
       setMyCards(Array.from({ length: cardCount }, () => generateCard()));
       setRole("player");
+
+      // Join Socket.IO room
+      joinGameRoom(gameId, data.player.id, name);
+
       return true;
-    } catch (e) {
-      toast({ title: "Join Failed", description: "Room not found or full", variant: "destructive" });
+    } catch (e: any) {
+      const errorMsg = e.message || "Room not found or full";
+      toast({ title: "Join Failed", description: errorMsg, variant: "destructive" });
       return false;
     }
   };
@@ -92,6 +174,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       setGameState(data);
       setCurrentUser({ name: hostName, id: data.hostId });
       setRole("host");
+
+      // Join Socket.IO room as host
+      joinGameRoom(data.id, data.hostId, hostName);
+
       return data.id;
     } catch (e) { return null; }
   };
@@ -107,30 +193,63 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const claimBingo = async () => {
-    // Win detection logic for 'line' pattern
-    const winLines = [[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24]];
-    const hasWon = myCards.some(c => winLines.some(line => line.every(idx => c.marked.includes(idx))));
-    
+    // Use pattern validator to check if any card has winning pattern
+    const hasWon = myCards.some(card =>
+      validateMarked(card.marked, gameState.winPattern as PatternName)
+    );
+
     if (!hasWon) {
       toast({ title: "Wait!", description: "You don't have a valid pattern yet!", variant: "destructive" });
       return;
     }
 
     await apiRequest("POST", `${getApiUrl()}/api/games/${gameState.gameId}/bingo`, {
-      playerId: currentUser.id, pattern: gameState.winPattern
+      playerId: currentUser.id,
+      name: currentUser.name,
+      pattern: gameState.winPattern
     });
-    toast({ title: "BINGO CLAIMED!", description: "Waiting for host validation..." });
+    toast({ title: "BINGO CLAIMED!", description: "Waiting for validation..." });
   };
 
   const callNumber = async () => {
     await apiRequest("POST", `${getApiUrl()}/api/games/${gameState.gameId}/call`);
-    refreshGameState();
+  };
+
+  const startGame = async () => {
+    await apiRequest("POST", `${getApiUrl()}/api/games/${gameState.gameId}/start`);
+  };
+
+  const pauseGame = async () => {
+    await apiRequest("POST", `${getApiUrl()}/api/games/${gameState.gameId}/pause`);
+  };
+
+  const restartGame = async () => {
+    await apiRequest("POST", `${getApiUrl()}/api/games/${gameState.gameId}/restart`);
+    setMyCards([]);
+  };
+
+  const sendMessage = (text: string) => {
+    if (!text.trim()) return;
+    emitEvent("chat-message", {
+      gameId: gameState.gameId,
+      playerId: currentUser.id,
+      playerName: currentUser.name,
+      text: text.trim()
+    });
+  };
+
+  const exitGame = () => {
+    if (gameState.gameId) {
+      leaveGameRoom(gameState.gameId, currentUser.id, currentUser.name);
+    }
+    window.location.href = "/";
   };
 
   return (
-    <GameContext.Provider value={{ 
+    <GameContext.Provider value={{
       gameState, role, currentUser, myCards, joinGame, createGame,
-      callNumber, markNumber, claimBingo, exitGame: () => window.location.href = "/" 
+      callNumber, startGame, pauseGame, restartGame,
+      markNumber, claimBingo, sendMessage, exitGame
     }}>
       {children}
     </GameContext.Provider>

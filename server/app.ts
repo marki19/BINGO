@@ -1,7 +1,8 @@
 import { type Server } from "node:http";
 import express, { type Express, type Request, Response, NextFunction } from "express";
-import cors from "cors"; // <--- ADDED THIS
+import cors from "cors";
 import { registerRoutes } from "./routes";
+import { Server as SocketIOServer } from "socket.io";
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
