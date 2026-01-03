@@ -49,6 +49,15 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const developerActions = pgTable("developer_actions", {
+  id: varchar("id").primaryKey(),
+  gameId: varchar("game_id").notNull().references(() => games.id, { onDelete: "cascade" }),
+  playerId: varchar("player_id").notNull(),
+  action: text("action").notNull(),
+  details: json("details").$type<Record<string, any>>().notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+});
+
 // Add these to your shared/schema.ts
 export interface IStorage {
   // Game Methods
@@ -81,6 +90,7 @@ export const insertPlayerSchema = createInsertSchema(players);
 export const insertCardSchema = createInsertSchema(cards);
 export const insertWinnerSchema = createInsertSchema(winners);
 export const insertMessageSchema = createInsertSchema(messages);
+export const insertDeveloperActionSchema = createInsertSchema(developerActions);
 
 export type Game = typeof games.$inferSelect;
 export type InsertGame = z.infer<typeof insertGameSchema>;
@@ -92,3 +102,5 @@ export type Winner = typeof winners.$inferSelect;
 export type InsertWinner = z.infer<typeof insertWinnerSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type DeveloperAction = typeof developerActions.$inferSelect;
+export type InsertDeveloperAction = z.infer<typeof insertDeveloperActionSchema>;

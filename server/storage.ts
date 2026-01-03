@@ -1,9 +1,9 @@
 import { db } from "./db";
-import { 
-  games, players, cards, winners, messages,
-  type Game, type InsertGame, type Player, type InsertPlayer, 
-  type Card, type InsertCard, type Winner, type InsertWinner, 
-  type Message, type InsertMessage, type IStorage 
+import {
+  games, players, cards, winners, messages, developerActions,
+  type Game, type InsertGame, type Player, type InsertPlayer,
+  type Card, type InsertCard, type Winner, type InsertWinner,
+  type Message, type InsertMessage, type DeveloperAction, type InsertDeveloperAction, type IStorage
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
@@ -29,6 +29,10 @@ export class PostgresStorage implements IStorage {
 
   async updateStagedNumber(gameId: string, number: number | null): Promise<void> {
     await db.update(games).set({ stagedNumber: number, updatedAt: new Date() }).where(eq(games.id, gameId));
+  }
+
+  async updateGamePattern(gameId: string, pattern: string): Promise<void> {
+    await db.update(games).set({ winPattern: pattern, updatedAt: new Date() }).where(eq(games.id, gameId));
   }
 
   // PLAYERS
@@ -81,6 +85,16 @@ export class PostgresStorage implements IStorage {
 
   async getGameMessages(gameId: string): Promise<Message[]> {
     return await db.select().from(messages).where(eq(messages.gameId, gameId)).orderBy(desc(messages.createdAt));
+  }
+
+  // DEVELOPER ACTIONS
+  async createDeveloperAction(action: InsertDeveloperAction): Promise<DeveloperAction> {
+    const [result] = await db.insert(developerActions).values(action).returning();
+    return result;
+  }
+
+  async getGameDeveloperActions(gameId: string): Promise<DeveloperAction[]> {
+    return await db.select().from(developerActions).where(eq(developerActions.gameId, gameId)).orderBy(desc(developerActions.timestamp));
   }
 }
 
